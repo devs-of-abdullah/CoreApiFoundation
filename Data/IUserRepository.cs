@@ -9,7 +9,6 @@ namespace Data
         Task<int> AddAsync(UserEntity user);
         Task UpdateAsync(UserEntity user);
         Task DeleteAsync(int id);
-
         Task<List<UserEntity>> GetAllAsync();
     }
 }

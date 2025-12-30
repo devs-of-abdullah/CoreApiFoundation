@@ -21,7 +21,6 @@ namespace Data
             return await _context.Users.AnyAsync(u => u.Email == email);
 
         }
-
         public async Task<int> AddAsync(UserEntity user)
         {
             _context.Users.Add(user);
@@ -36,13 +35,12 @@ namespace Data
         public async Task DeleteAsync(int id)
         {
             var user = await _context.Users.FindAsync(id)
-                ?? throw new KeyNotFoundException("USer not found");
+                ?? throw new KeyNotFoundException("Uder not found");
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
            
         }
-
         public async Task<List<UserEntity>> GetAllAsync()
         {
             return await _context.Users.ToListAsync();

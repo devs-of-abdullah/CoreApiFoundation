@@ -13,30 +13,30 @@ namespace Business
             _tokenService = token;
         }
 
-        public async Task<int> RegisterAsync(string email, string password)
+        public async Task<int> RegisterAsync(RegisterUserDto userDto)
         {
-            if (await _repo.ExistsByEmailAsync(email))
-                throw new InvalidOperationException("User already exists");
+            if (await _repo.ExistsByEmailAsync(userDto.Email))
+                throw new InvalidOperationException($"'{userDto.Email}' email already exists");
+
 
             var user = new UserEntity
             {
-                Email = email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password)
+                Email = userDto.Email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(userDto.Password)
             };
 
-            await _repo.AddAsync(user);
-            
-            return user.Id;
+            return await _repo.AddAsync(user);
+
 
         }
 
-        public async Task<string> LoginAsync(string email, string password)
+        public async Task<string> LoginAsync(LoginUserDto userDto)
         {
-            var user = await _repo.GetByEmailAsync(email)
-                ?? throw new UnauthorizedAccessException("Invalid credintials");
+            var user = await _repo.GetByEmailAsync(userDto.Email)
+                ?? throw new UnauthorizedAccessException($"{userDto.Email} is not exists");
 
-            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-                throw new UnauthorizedAccessException("Invalid credintials");
+            if (!BCrypt.Net.BCrypt.Verify(userDto.Password, user.PasswordHash))
+                throw new InvalidOperationException("Wrong password");
 
             return _tokenService.CreateToken(user);
 

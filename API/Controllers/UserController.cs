@@ -20,7 +20,7 @@ namespace API
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
         {
-            int Id = await _userService.RegisterAsync(dto.Email, dto.Password);
+            int Id = await _userService.RegisterAsync(dto);
             return StatusCode(201, $"User registered succesfully with id: {Id}");
         }
 
@@ -28,7 +28,7 @@ namespace API
         public async Task<IActionResult> Login([FromBody] LoginUserDto dto)
         {
 
-            var token = await _userService.LoginAsync(dto.Email, dto.Password);
+            var token = await _userService.LoginAsync(dto);
 
             return Ok(new { token });
         }

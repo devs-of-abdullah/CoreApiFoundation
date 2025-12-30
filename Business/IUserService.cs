@@ -4,8 +4,8 @@ namespace Business
 {
     public interface IUserService
     {
-        Task<int> RegisterAsync(string email, string password);
-        Task<string> LoginAsync(string email, string password);
+        Task<int> RegisterAsync(RegisterUserDto userDto);
+        Task<string> LoginAsync(LoginUserDto userDto);
 
         Task DeleteAsync(int id);
         Task UpdateAsync(int Id,UpdateUserDto userDto);
