@@ -20,8 +20,8 @@ namespace API
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
         {
-            await _userService.RegisterAsync(dto.Email, dto.Password);
-            return StatusCode(201, "User registered succesfully");
+            int Id = await _userService.RegisterAsync(dto.Email, dto.Password);
+            return StatusCode(201, $"User registered succesfully with id: {Id}");
         }
 
         [HttpPost("login")]
@@ -44,6 +44,37 @@ namespace API
             });
         }
 
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            return Ok(await _userService.GetAllAsync());
+        }
 
+        [Authorize]
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var user = _userService.GetByIdAsync(id);
+            return user == null ? NotFound() : Ok(user);
+
+        }
+
+        [Authorize]
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _userService.DeleteAsync(id);
+            return NoContent();
+
+        }
+
+        [Authorize]
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateUserDto dto)
+        {
+            await _userService.UpdateAsync(id, dto);
+            return NoContent();
+        }
     }
 }

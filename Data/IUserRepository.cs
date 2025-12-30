@@ -6,6 +6,10 @@ namespace Data
         Task<UserEntity?> GetByEmailAsync(string email);
         Task<UserEntity?> GetByIdAsync(int id);
         Task<bool> ExistsByEmailAsync(string email);
-        Task AddAsync(UserEntity user);
+        Task<int> AddAsync(UserEntity user);
+        Task UpdateAsync(UserEntity user);
+        Task DeleteAsync(int id);
+
+        Task<List<UserEntity>> GetAllAsync();
     }
 }

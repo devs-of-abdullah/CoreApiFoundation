@@ -22,13 +22,30 @@ namespace Data
 
         }
 
-        public async Task AddAsync(UserEntity user)
+        public async Task<int> AddAsync(UserEntity user)
         {
-
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+            return user.Id;
+        }
+        public async Task UpdateAsync(UserEntity user) 
+        {
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+        }
+        public async Task DeleteAsync(int id)
+        {
+            var user = await _context.Users.FindAsync(id)
+                ?? throw new KeyNotFoundException("USer not found");
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+           
         }
 
-
+        public async Task<List<UserEntity>> GetAllAsync()
+        {
+            return await _context.Users.ToListAsync();
+        }
     }
 }
