@@ -7,6 +7,7 @@ To update the database:
 dotnet ef database update --project Data --startup-project API
 
 To Remove the Migration:
+
 dotnet ef migrations remove --project Data --startup-project API
 
 to drop all database 
