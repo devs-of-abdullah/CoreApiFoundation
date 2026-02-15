@@ -57,22 +57,87 @@ namespace Business.Services
                 UpdatedAt = user.UpdatedAt,
             };
         }
-        public async Task SoftDeleteAsync(int Id)
+        public async Task SoftDeleteAsync(int Id, string currentPassword)
         {
-            await _repo.SoftDeleteAsync(Id);
-        }
-        public async Task UpdateAsync(int Id, UpdateUserDTO dto)
-        {
-            var user = await _repo.GetByIdAsync(Id)
-                ?? throw new KeyNotFoundException("User not found");
+            var user = await _repo.GetByIdAsync(Id);
 
-            user.Role = dto.Role;
-            user.Email = dto.Email;
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+            if (user == null)
+                throw new KeyNotFoundException("User not found");
+           
+            if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
+                throw new UnauthorizedAccessException("Current password is incorrect");
+            
+            if (user.IsDeleted)
+                throw new InvalidOperationException("User already deleted");
+           
+            user.IsDeleted = true;
 
             await _repo.UpdateAsync(user);
         }
+      
+        public async Task UpdatePasswordAsync(int id, string currentPassword, string newPassword)
+        {
+            var user = await _repo.GetByIdAsync(id);
 
+            if (user == null)
+                throw new KeyNotFoundException("User not found");
+
+            if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
+                throw new UnauthorizedAccessException("Current password is incorrect");
+
+            if (BCrypt.Net.BCrypt.Verify(newPassword, user.PasswordHash))
+                throw new Exception("New password cannot be same as old password");
+           
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+
+            await _repo.UpdateAsync(user);
+
+        }
+        public async Task UpdateRoleAsync(int id,string currentUserRole, string newRole)
+        {
+            if (currentUserRole != "Admin")
+                throw new UnauthorizedAccessException("Only admins can change roles");
+           
+            var user = await _repo.GetByIdAsync(id);
+
+            if (user == null)
+                throw new KeyNotFoundException("User not found");
+
+            user.Role = newRole;
+            await _repo.UpdateAsync(user);
+
+        }
+        public async Task UpdateEmailAsync(int id, string newEmail, string currentPassword)
+        {
+            if (string.IsNullOrWhiteSpace(newEmail))
+                throw new ArgumentException("Email cannot be empty");
+           
+            newEmail = newEmail.Trim().ToLower();
+
+            var user = await _repo.GetByIdAsync(id);
+
+            if (user == null)
+               throw new KeyNotFoundException("User not found");
+            
+            if (user.IsDeleted)
+                throw new InvalidOperationException("User account is deleted");
+
+            if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
+                throw new UnauthorizedAccessException("Password is incorrect");
+            
+            if (user.Email.ToLower() == newEmail)
+                throw new InvalidOperationException("New email cannot be same as current email");
+
+            var existing = await _repo.GetByEmailAsync(newEmail);
+            if (existing != null && existing.Id != id)
+                throw new InvalidOperationException("Email already in use");
+            
+            user.Email = newEmail;
+           
+            await _repo.UpdateAsync(user);
+
+
+        }
     }
 
 }

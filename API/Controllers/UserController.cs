@@ -73,18 +73,8 @@ using Business.Interfaces;
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> DeleteStudent(int id)
     {
-        if (id < 1)
-        {
-            return BadRequest($"Not accepted ID {id}");
-        }
-        var user = _userService.GetByIdAsync(id);
-        if (user == null)
-        {
-            return NotFound($"User with ID {id} not found.");
-        }
-
-        await _userService.SoftDeleteAsync(id);
-        return Ok($"Student with ID {id} has been deleted.");
+        return Ok();
+       
     }
         
 

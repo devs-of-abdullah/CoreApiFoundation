@@ -41,31 +41,10 @@ public class UserRepository : IUserRepository
 
     public async Task UpdateAsync(UserEntity user)
     {
-        var existingUser = await _context.users
-            .FirstOrDefaultAsync(u => u.Id == user.Id && !u.IsDeleted);
-
-        if (existingUser is null)
-            throw new KeyNotFoundException("User not found");
-
-        existingUser.Email = user.Email;
-        existingUser.Role = user.Role;
-        existingUser.UpdatedAt = DateTime.UtcNow;
-
+        _context.users.Update(user);
         await _context.SaveChangesAsync();
     }
-
-    public async Task SoftDeleteAsync(int id)
-    {
-        var user = await _context.users
-            .FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted);
-
-        if (user is null)
-            throw new KeyNotFoundException("User not found");
-
-        user.IsDeleted = true;
-
-        await _context.SaveChangesAsync();
-    }
+   
 
     
 }

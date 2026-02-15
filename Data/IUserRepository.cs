@@ -9,6 +9,5 @@ namespace Data
         Task<bool> ExistsByEmailAsync(string email);
         Task<int> CreateAsync(UserEntity user);
         Task UpdateAsync(UserEntity user);
-        Task SoftDeleteAsync(int id);
     }
 }
