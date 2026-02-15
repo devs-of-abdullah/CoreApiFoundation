@@ -2,5 +2,6 @@
   <Project Path="API/API.csproj" />
   <Project Path="Business/Business.csproj" />
   <Project Path="Data/Data.csproj" />
+  <Project Path="DTO/DTO.csproj" Id="7843040e-47cf-4c21-bc0f-557e5cc7a752" />
   <Project Path="Entities/Entities.csproj" />
 </Solution>

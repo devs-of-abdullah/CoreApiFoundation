@@ -1,80 +1,93 @@
-﻿using Business;
-using Entities.DTOs;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
-namespace API
-{
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using DTO.User;
+using Business.Interfaces;
+
+
+
     [ApiController]
     [Route("api/[controller]")]
-    public class UserController : ControllerBase
+    public class UsersController : ControllerBase 
     {
         readonly IUserService _userService;
 
-        public UserController(IUserService userService)
+        public UsersController(IUserService userService)
         {
-            _userService = userService;
+         _userService = userService;
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
+        [HttpGet("{id}", Name = "GetUserById")]
+        public async Task<ActionResult<ReadUserDTO>> GetUserById(int id, [FromServices] IAuthorizationService authorizationService)
         {
-            int Id = await _userService.RegisterAsync(dto);
-            return StatusCode(201, $"User registered succesfully with id: {Id}");
+            if (id < 1)
+                return BadRequest("Invalid user id.");
+
+            var user = await _userService.GetByIdAsync(id);
+
+            if (user == null)
+                return NotFound("User not found.");
+
+        
+            var authResult = await authorizationService.AuthorizeAsync(User, id, "StudentOwnerOrAdmin");
+
+         
+            if (!authResult.Succeeded)
+                return Forbid(); 
+
+            return Ok(user);
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginUserDto dto)
+
+        [Authorize(Roles = "Admin")] 
+        [HttpPost(Name = "AddUser")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<ReadUserDTO>> AddUser(CreateUserDTO newUser)
         {
-
-            var token = await _userService.LoginAsync(dto);
-
-            return Ok(new { token });
-        }
-
-        [Authorize]
-        [HttpGet("me")]
-        public IActionResult Me()
-        {
-            return Ok(new
+            if (
+               string.IsNullOrEmpty(newUser.Email)
+            || string.IsNullOrEmpty(newUser.Password)
+            || string.IsNullOrEmpty(newUser.Role)
+            )
             {
-                UserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
-                Email = User.FindFirst(ClaimTypes.Email)?.Value
-            });
+                return BadRequest("Missed user data.");
+            }
+            var isExists = _userService.GetByEmailAsync(newUser.Email);
+          
+            int createdId = await _userService.CreateAsync(newUser);
+
+
+            if (createdId > 0) return Ok($"User created with id: {createdId}");
+
+
+            return BadRequest("Error while creating");
+
         }
 
-        [Authorize]
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
+
+    [Authorize(Roles = "Admin")]
+    [HttpDelete("{id}", Name = "DeleteUser")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> DeleteStudent(int id)
+    {
+        if (id < 1)
         {
-            return Ok(await _userService.GetAllAsync());
+            return BadRequest($"Not accepted ID {id}");
         }
-
-        [Authorize]
-        [HttpGet("{id:int}")]
-        public async Task<IActionResult> GetById(int id)
+        var user = _userService.GetByIdAsync(id);
+        if (user == null)
         {
-            var user = _userService.GetByIdAsync(id);
-            return user == null ? NotFound() : Ok(user);
-
+            return NotFound($"User with ID {id} not found.");
         }
 
-        [Authorize]
-        [HttpDelete("{id:int}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            await _userService.DeleteAsync(id);
-            return NoContent();
-
-        }
-
-        [Authorize]
-        [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateUserDto dto)
-        {
-            await _userService.UpdateAsync(id, dto);
-            return NoContent();
-        }
+        await _userService.SoftDeleteAsync(id);
+        return Ok($"Student with ID {id} has been deleted.");
     }
-}
+        
+
+
+    }
+
