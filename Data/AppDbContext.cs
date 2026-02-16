@@ -37,8 +37,9 @@ namespace Data
                 entity.Property(u => u.CreatedAt)
                       .HasDefaultValueSql("GETUTCDATE()");
 
-                entity.Property(u => u.RefreshTokenHash)
-                      .HasMaxLength(256);
+                entity.HasIndex(u => u.RefreshTokenHash)
+                      .IsUnique()
+                      .HasFilter("[RefreshTokenHash] IS NOT NULL");
 
                 entity.Property(u => u.RefreshTokenExpiresAt);
                      
