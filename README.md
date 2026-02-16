@@ -1,4 +1,15 @@
-# Secured API Layers
+# CoreApiFoundation
+A production-ready ASP.NET Core Web API Starter Template built with layered architecture.
+This template provides a clean and reusable foundation for building scalable and maintainable backend applications.
+
+## Purpose
+- This template is designed to:
+- Speed up backend development
+- Enforce clean architecture principles
+- Serve as a reusable base for new projects
+- Provide a solid production-ready foundation
+
+# Built with secured API Layers
 
 ## Layer 1 - HTTPS + CORS Foundation
 
