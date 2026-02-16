@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using DTO.User;
 using Business.Interfaces;
+using DTO.User;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -10,9 +11,7 @@ public class UsersController : ControllerBase
     private readonly IUserService _userService;
     private readonly IAuthorizationService _authorizationService;
 
-    public UsersController(
-        IUserService userService,
-        IAuthorizationService authorizationService)
+    public UsersController(IUserService userService, IAuthorizationService authorizationService)
     {
         _userService = userService;
         _authorizationService = authorizationService;
@@ -71,9 +70,9 @@ public class UsersController : ControllerBase
 
     [Authorize]
     [HttpPut("change-password")]
-    public async Task<IActionResult> ChangePassword(UpdateUserPasswordDTO dto)
+    public async Task<IActionResult> ChangePassword([FromBody] UpdateUserPasswordDTO dto)
     {
-        var userIdClaim = User.FindFirst("id")?.Value;
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (userIdClaim == null)
             return Unauthorized();
@@ -84,6 +83,7 @@ public class UsersController : ControllerBase
 
         return NoContent();
     }
+
 
 
 
