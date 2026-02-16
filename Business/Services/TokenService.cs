@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using DTO.Auth;
 using Entities;
+
 namespace Business
 {
     public class TokenService
@@ -19,12 +20,6 @@ namespace Business
 
         public TokenResponseDTO GenerateTokens(UserEntity user)
         {
-            if (string.IsNullOrWhiteSpace(user.Email))
-                throw new InvalidOperationException("User email is required.");
-
-            if (string.IsNullOrWhiteSpace(user.Role))
-                throw new InvalidOperationException("User role is required.");
-
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -37,37 +32,31 @@ namespace Business
                 ?? throw new InvalidOperationException("JWT Key missing");
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
-
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            int accessTokenMinutes = int.TryParse(_config["Jwt:ExpiresInMinutes"], out var min) ? min : 30;
+            int accessMinutes = int.Parse(_config["Jwt:ExpiresInMinutes"] ?? "30");
 
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(accessTokenMinutes),
+                expires: DateTime.UtcNow.AddMinutes(accessMinutes),
                 signingCredentials: creds
             );
 
-            var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
-
-            var refreshToken = GenerateSecureRefreshToken();
-
             return new TokenResponseDTO
             {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken
+                AccessToken = new JwtSecurityTokenHandler().WriteToken(token),
+                RefreshToken = GenerateSecureRefreshToken()
             };
         }
 
         static string GenerateSecureRefreshToken()
         {
-            var randomBytes = new byte[64];
+            var bytes = new byte[64];
             using var rng = RandomNumberGenerator.Create();
-            rng.GetBytes(randomBytes);
-            return Convert.ToBase64String(randomBytes);
+            rng.GetBytes(bytes);
+            return Convert.ToBase64String(bytes);
         }
     }
 }
-

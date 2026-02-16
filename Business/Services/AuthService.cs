@@ -1,24 +1,29 @@
 ﻿using DTO.Auth;
 using Data;
+using Microsoft.Extensions.Configuration;
 
 namespace Business.Services
 {
     public class AuthService
     {
-        private readonly IUserRepository _userRepository;
-        private readonly TokenService _tokenService;
+         readonly IUserRepository _userRepository;
+         readonly TokenService _tokenService;
+         readonly IConfiguration _config;
 
-        public AuthService(IUserRepository userRepository, TokenService tokenService)
+        public AuthService(IUserRepository userRepository, TokenService tokenService, IConfiguration config)
         {
             _userRepository = userRepository;
             _tokenService = tokenService;
+            _config = config;
         }
 
         public async Task<TokenResponseDTO?> Login(LoginRequestDTO request)
         {
-            var user = await _userRepository.GetByEmailAsync(request.Email);
+            var email = request.Email.Trim().ToLower();
 
-            if (user == null)
+            var user = await _userRepository.GetByEmailAsync(email);
+
+            if (user == null || user.IsDeleted)
                 return null;
 
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
@@ -26,9 +31,12 @@ namespace Business.Services
 
             var tokens = _tokenService.GenerateTokens(user);
 
+            int refreshDays = int.Parse(_config["Jwt:RefreshTokenDays"] ?? "7");
+
             user.RefreshTokenHash = BCrypt.Net.BCrypt.HashPassword(tokens.RefreshToken);
-            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(7);
+            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(refreshDays);
             user.RefreshTokenRevokedAt = null;
+            user.UpdatedAt = DateTime.UtcNow;
 
             await _userRepository.UpdateAsync(user);
 
@@ -37,9 +45,11 @@ namespace Business.Services
 
         public async Task<TokenResponseDTO?> RefreshToken(RefreshRequestDTO request)
         {
-            var user = await _userRepository.GetByEmailAsync(request.Email);
+            var email = request.Email.Trim().ToLower();
 
-            if (user == null)
+            var user = await _userRepository.GetByEmailAsync(email);
+
+            if (user == null || user.IsDeleted)
                 return null;
 
             if (user.RefreshTokenRevokedAt != null)
@@ -49,34 +59,39 @@ namespace Business.Services
                 user.RefreshTokenExpiresAt <= DateTime.UtcNow)
                 return null;
 
-            if (!BCrypt.Net.BCrypt.Verify(request.RefreshToken, user.RefreshTokenHash))
+            if (string.IsNullOrEmpty(user.RefreshTokenHash) ||
+                !BCrypt.Net.BCrypt.Verify(request.RefreshToken, user.RefreshTokenHash))
                 return null;
 
-            // Token rotation
             var tokens = _tokenService.GenerateTokens(user);
 
+            int refreshDays = int.Parse(_config["Jwt:RefreshTokenDays"] ?? "7");
+
             user.RefreshTokenHash = BCrypt.Net.BCrypt.HashPassword(tokens.RefreshToken);
-            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(7);
+            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(refreshDays);
             user.RefreshTokenRevokedAt = null;
+            user.UpdatedAt = DateTime.UtcNow;
 
             await _userRepository.UpdateAsync(user);
 
             return tokens;
         }
 
-        public async Task Logout(LogoutRequestDTO request)
+        public async Task Logout(int userId, string refreshToken)
         {
-            var user = await _userRepository.GetByEmailAsync(request.Email);
+            var user = await _userRepository.GetByIdAsync(userId);
 
-            if (user == null)
+            if (user == null || user.IsDeleted)
                 return;
 
             if (user.RefreshTokenHash != null &&
-                BCrypt.Net.BCrypt.Verify(request.RefreshToken, user.RefreshTokenHash))
+                BCrypt.Net.BCrypt.Verify(refreshToken, user.RefreshTokenHash))
             {
                 user.RefreshTokenRevokedAt = DateTime.UtcNow;
+                user.UpdatedAt = DateTime.UtcNow;
                 await _userRepository.UpdateAsync(user);
             }
         }
     }
 }
+

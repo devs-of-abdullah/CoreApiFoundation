@@ -1,4 +1,5 @@
-﻿using Business.Interfaces;
+﻿using Business;
+using Business.Interfaces;
 using Business.Services;
 using Data;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,8 @@ public static class ServiceExtensions
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<AuthService>();
+        services.AddScoped<TokenService>();
 
         services.AddControllers()
             .AddJsonOptions(x =>

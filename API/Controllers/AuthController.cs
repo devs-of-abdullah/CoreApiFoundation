@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using System.Security.Claims;
 using DTO.Auth;
 using Business.Services;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/auth")]
 public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
@@ -18,6 +20,9 @@ public class AuthController : ControllerBase
     [EnableRateLimiting("AuthLimiter")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var tokens = await _authService.Login(request);
 
         if (tokens == null)
@@ -30,6 +35,9 @@ public class AuthController : ControllerBase
     [EnableRateLimiting("AuthLimiter")]
     public async Task<IActionResult> Refresh([FromBody] RefreshRequestDTO request)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var tokens = await _authService.RefreshToken(request);
 
         if (tokens == null)
@@ -38,10 +46,22 @@ public class AuthController : ControllerBase
         return Ok(tokens);
     }
 
+    [Authorize]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] LogoutRequestDTO request)
     {
-        await _authService.Logout(request);
-        return Ok(new { message = "Logged out successfully" });
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+        if (userIdClaim == null)
+            return Unauthorized();
+
+        int userId = int.Parse(userIdClaim.Value);
+
+        await _authService.Logout(userId, request.RefreshToken);
+
+        return NoContent();
     }
 }
