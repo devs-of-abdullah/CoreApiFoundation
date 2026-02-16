@@ -9,7 +9,7 @@ This template provides a clean and reusable foundation for building scalable and
 - Serve as a reusable base for new projects
 - Provide a solid production-ready foundation
 
-# Built with secured API Layers
+# Built with secured Layers
 
 ## Layer 1 - HTTPS + CORS Foundation
 
