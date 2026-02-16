@@ -38,11 +38,10 @@ namespace Data
                       .HasDefaultValueSql("GETUTCDATE()");
 
                 entity.Property(u => u.RefreshTokenHash)
-                      .IsRequired()
                       .HasMaxLength(256);
 
-                entity.Property(u => u.RefreshTokenExpiresAt)
-                      .IsRequired();
+                entity.Property(u => u.RefreshTokenExpiresAt);
+                     
 
                 entity.HasIndex(u => u.RefreshTokenHash)
                       .IsUnique();

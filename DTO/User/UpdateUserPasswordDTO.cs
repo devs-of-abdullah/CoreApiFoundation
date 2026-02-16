@@ -3,8 +3,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace DTO.User
 {   
-       public record ChangePasswordDTO
+       public record UpdateUserPasswordDTO
         {
+            
+
             [Required]
             public string CurrentPassword { get; init; } = null!;
 

@@ -4,11 +4,11 @@ namespace Business.Interfaces
     public interface IUserService
     {
         Task<int> CreateAsync(CreateUserDTO UserDto);
-        Task SoftDeleteAsync(int id, string currentPassword);
+        Task SoftDeleteAsync(int id, SoftUserDeleteDTO dto);
         Task<ReadUserDTO?> GetByIdAsync(int id);
         Task<ReadUserDTO?> GetByEmailAsync(string email);
-        Task UpdatePasswordAsync(int id, string currentPassword, string newPassword);
+        Task UpdatePasswordAsync(int id, UpdateUserPasswordDTO dto);
         Task UpdateRoleAsync(int id,string currentUserRole, string newRole);
-        Task UpdateEmailAsync(int id, string newEmail, string currentPassword);
+        Task UpdateEmailAsync(int id,UpdateUserEmailDTO dto);
     }
 }

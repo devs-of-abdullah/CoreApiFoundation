@@ -29,7 +29,6 @@ namespace Business.Services
 
 
         }
-
         public async Task<ReadUserDTO?> GetByIdAsync(int id)
         {
             var user = await _repo.GetByIdAsync(id);
@@ -57,14 +56,14 @@ namespace Business.Services
                 UpdatedAt = user.UpdatedAt,
             };
         }
-        public async Task SoftDeleteAsync(int Id, string currentPassword)
+        public async Task SoftDeleteAsync(int Id, SoftUserDeleteDTO dto)
         {
             var user = await _repo.GetByIdAsync(Id);
 
             if (user == null)
                 throw new KeyNotFoundException("User not found");
            
-            if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
+            if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, user.PasswordHash))
                 throw new UnauthorizedAccessException("Current password is incorrect");
             
             if (user.IsDeleted)
@@ -74,24 +73,27 @@ namespace Business.Services
 
             await _repo.UpdateAsync(user);
         }
-      
-        public async Task UpdatePasswordAsync(int id, string currentPassword, string newPassword)
+        public async Task UpdatePasswordAsync(int userId, UpdateUserPasswordDTO dto)
         {
-            var user = await _repo.GetByIdAsync(id);
+            var user = await _repo.GetByIdAsync(userId);
 
             if (user == null)
                 throw new KeyNotFoundException("User not found");
 
-            if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
+            if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, user.PasswordHash))
                 throw new UnauthorizedAccessException("Current password is incorrect");
 
-            if (BCrypt.Net.BCrypt.Verify(newPassword, user.PasswordHash))
-                throw new Exception("New password cannot be same as old password");
-           
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            if (BCrypt.Net.BCrypt.Verify(dto.NewPassword, user.PasswordHash))
+                throw new InvalidOperationException("New password cannot be same as old password");
+
+            if (dto.NewPassword.Length < 6)
+                throw new InvalidOperationException("Password must be at least 6 characters.");
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword, workFactor: 12);
+
+            user.UpdatedAt = DateTime.UtcNow;
 
             await _repo.UpdateAsync(user);
-
         }
         public async Task UpdateRoleAsync(int id,string currentUserRole, string newRole)
         {
@@ -107,37 +109,38 @@ namespace Business.Services
             await _repo.UpdateAsync(user);
 
         }
-        public async Task UpdateEmailAsync(int id, string newEmail, string currentPassword)
+        public async Task UpdateEmailAsync(int userId, UpdateUserEmailDTO dto)
         {
-            if (string.IsNullOrWhiteSpace(newEmail))
+            if (string.IsNullOrWhiteSpace(dto.NewEmail))
                 throw new ArgumentException("Email cannot be empty");
-           
-            newEmail = newEmail.Trim().ToLower();
 
-            var user = await _repo.GetByIdAsync(id);
+            var normalizedEmail = dto.NewEmail.Trim().ToLower();
+
+            var user = await _repo.GetByIdAsync(userId);
 
             if (user == null)
-               throw new KeyNotFoundException("User not found");
-            
+                throw new KeyNotFoundException("User not found");
+
             if (user.IsDeleted)
                 throw new InvalidOperationException("User account is deleted");
 
-            if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
+            if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, user.PasswordHash))
                 throw new UnauthorizedAccessException("Password is incorrect");
-            
-            if (user.Email.ToLower() == newEmail)
+
+            if (user.Email == normalizedEmail)
                 throw new InvalidOperationException("New email cannot be same as current email");
 
-            var existing = await _repo.GetByEmailAsync(newEmail);
-            if (existing != null && existing.Id != id)
+            var existing = await _repo.GetByEmailAsync(normalizedEmail);
+
+            if (existing != null && existing.Id != userId)
                 throw new InvalidOperationException("Email already in use");
-            
-            user.Email = newEmail;
-           
+
+            user.Email = normalizedEmail;
+            user.UpdatedAt = DateTime.UtcNow;
+
             await _repo.UpdateAsync(user);
-
-
         }
+
     }
 
 }
