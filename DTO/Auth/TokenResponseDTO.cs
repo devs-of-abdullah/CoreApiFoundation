@@ -1,9 +1,8 @@
 ﻿namespace DTO.Auth
 {
-    public class TokenResponseDTO
+    public record TokenResponseDTO
     {
-        public string AccessToken { get; set; } = null!;
-        public string RefreshToken { get; set; } = null!;
-
+        public string AccessToken { get; init; } = null!;
+        public string RefreshToken { get; init; } = null!;
     }
 }

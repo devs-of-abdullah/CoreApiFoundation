@@ -1,12 +1,15 @@
 ﻿
 
+using System.ComponentModel.DataAnnotations;
+
 namespace DTO.User
 {
-    public class UpdateUserDTO
+    public record UpdateUserDTO
     {
-        public string Email { get; set; } = null!;
-        public string Password { get; set; } = null!;
-        public string Role { get; set; } = null!; 
+        [Required, EmailAddress]
+        public string Email { get; init; } = null!;
 
+        [Required]
+        public string Role { get; init; } = null!;  
     }
 }

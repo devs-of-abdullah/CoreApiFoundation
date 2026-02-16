@@ -1,8 +1,13 @@
-﻿namespace DTO.Auth
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace DTO.Auth
 {
-    public class LogoutRequestDTO
+    public record LogoutRequestDTO
     {
-        public string Email { get; set; } = null!;
-        public string RefreshToken { get; set; } = null!;
+        [Required, EmailAddress]
+        public string Email { get; init; } = null!;
+
+        [Required]
+        public string RefreshToken { get; init; } = null!;
     }
 }

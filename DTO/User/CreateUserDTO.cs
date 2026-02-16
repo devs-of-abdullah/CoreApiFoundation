@@ -1,11 +1,19 @@
 ﻿
+using System.ComponentModel.DataAnnotations;
+
 namespace DTO.User
 {
-    public class CreateUserDTO
+    public record CreateUserDTO
     {
-        public string Email { get; set; } = null!;
-        public string Role { get; set; } = null!; 
-        public string Password { get; set; } = null!;
+        [Required, EmailAddress, MaxLength(256)]
+        public string Email { get; init; } = null!;
 
+        [Required, MinLength(6)]
+        public string Password { get; init; } = null!;
+
+        [Required]
+        public string Role { get; init; } = null!;
+
+       
     }
 }

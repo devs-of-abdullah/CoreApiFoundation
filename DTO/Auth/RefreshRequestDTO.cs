@@ -1,9 +1,13 @@
-﻿namespace DTO.Auth
-{
-    public class RefreshRequestDTO
-    {
-        public string RefreshToken { get; set; } = null!;
-        public string Email { get; set; } = null!;
+﻿using System.ComponentModel.DataAnnotations;
 
+namespace DTO.Auth
+{
+    public record RefreshRequestDTO
+    {
+        [Required]
+        public string RefreshToken { get; init; } = null!;
+
+        [Required, EmailAddress]
+        public string Email { get; init; } = null!;
     }
 }

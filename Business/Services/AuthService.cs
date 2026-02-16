@@ -1,56 +1,82 @@
-﻿using Microsoft.AspNetCore.Identity.Data;
-using DTO.Auth;
-using Business;
+﻿using DTO.Auth;
 using Data;
 
-public class AuthService
+namespace Business.Services
 {
-    readonly IUserRepository _userRepository;
-    readonly TokenService _tokenService;
-
-    public AuthService(TokenService tokenService,IUserRepository userRepository)
+    public class AuthService
     {
-        _userRepository = userRepository;
-        _tokenService = tokenService;
-    }
-    public async Task<TokenResponseDTO?> Login(LoginRequestDTO request)
-    {
-        var user =  await _userRepository.GetByEmailAsync(request.Email);
+        private readonly IUserRepository _userRepository;
+        private readonly TokenService _tokenService;
 
-        if (user == null || BCrypt.Net.BCrypt.Verify(request.Password, user.Email))
-            return null;
-
-        return await _tokenService.CreateToken(request.Email);
-    }
-
-    public async Task<TokenResponseDTO?> RefreshToken(RefreshRequestDTO request)
-    {
-        var user = await _userRepository.GetByEmailAsync(request.Email);
-
-        if ( user == null
-            || user.RefreshTokenRevokedAt != null
-            || user.RefreshTokenExpiresAt == null
-            || user.RefreshTokenExpiresAt <= DateTime.UtcNow
-            || !BCrypt.Net.BCrypt.Verify(request.RefreshToken, user.RefreshTokenHash))
-            return null;
-
-        return await _tokenService.CreateToken(request.Email);
-    }
-
-    public async Task Logout(LogoutRequestDTO request)
-    {
-        var user = await _userRepository.GetByEmailAsync(request.Email);
-
-        if (user == null)
-            return;
-
-        if (BCrypt.Net.BCrypt.Verify(request.RefreshToken, user.RefreshTokenHash))
+        public AuthService(IUserRepository userRepository, TokenService tokenService)
         {
-            user.RefreshTokenRevokedAt = DateTime.UtcNow;
+            _userRepository = userRepository;
+            _tokenService = tokenService;
+        }
+
+        public async Task<TokenResponseDTO?> Login(LoginRequestDTO request)
+        {
+            var user = await _userRepository.GetByEmailAsync(request.Email);
+
+            if (user == null)
+                return null;
+
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+                return null;
+
+            var tokens = _tokenService.GenerateTokens(user);
+
+            user.RefreshTokenHash = BCrypt.Net.BCrypt.HashPassword(tokens.RefreshToken);
+            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(7);
+            user.RefreshTokenRevokedAt = null;
+
+            await _userRepository.UpdateAsync(user);
+
+            return tokens;
+        }
+
+        public async Task<TokenResponseDTO?> RefreshToken(RefreshRequestDTO request)
+        {
+            var user = await _userRepository.GetByEmailAsync(request.Email);
+
+            if (user == null)
+                return null;
+
+            if (user.RefreshTokenRevokedAt != null)
+                return null;
+
+            if (user.RefreshTokenExpiresAt == null ||
+                user.RefreshTokenExpiresAt <= DateTime.UtcNow)
+                return null;
+
+            if (!BCrypt.Net.BCrypt.Verify(request.RefreshToken, user.RefreshTokenHash))
+                return null;
+
+            // Token rotation
+            var tokens = _tokenService.GenerateTokens(user);
+
+            user.RefreshTokenHash = BCrypt.Net.BCrypt.HashPassword(tokens.RefreshToken);
+            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(7);
+            user.RefreshTokenRevokedAt = null;
+
+            await _userRepository.UpdateAsync(user);
+
+            return tokens;
+        }
+
+        public async Task Logout(LogoutRequestDTO request)
+        {
+            var user = await _userRepository.GetByEmailAsync(request.Email);
+
+            if (user == null)
+                return;
+
+            if (user.RefreshTokenHash != null &&
+                BCrypt.Net.BCrypt.Verify(request.RefreshToken, user.RefreshTokenHash))
+            {
+                user.RefreshTokenRevokedAt = DateTime.UtcNow;
+                await _userRepository.UpdateAsync(user);
+            }
         }
     }
-
-   
-
-   
 }

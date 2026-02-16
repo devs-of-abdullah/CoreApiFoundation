@@ -1,65 +1,58 @@
-﻿using DTO.User;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using DTO.Auth;
-
-using Data;
+using Entities;
 namespace Business
 {
     public class TokenService
     {
-        readonly IConfiguration _config;
-        readonly IUserRepository _userRepository;
-        public TokenService(IConfiguration config, IUserRepository userRepository)
+        private readonly IConfiguration _config;
+
+        public TokenService(IConfiguration config)
         {
             _config = config;
-            _userRepository = userRepository;
         }
 
-        
-        public async Task <TokenResponseDTO> CreateToken(string email)
+        public TokenResponseDTO GenerateTokens(UserEntity user)
         {
-            var user = await _userRepository.GetByEmailAsync(email);
-
-            
-            if (user == null) throw new ArgumentNullException(nameof(user));
             if (string.IsNullOrWhiteSpace(user.Email))
-                throw new InvalidOperationException("User email is required to create a JWT.");
+                throw new InvalidOperationException("User email is required.");
+
             if (string.IsNullOrWhiteSpace(user.Role))
-                throw new InvalidOperationException("User role is required to create a JWT.");
+                throw new InvalidOperationException("User role is required.");
 
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Role, user.Role),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_config["Jwt:Key"]
-                    ?? throw new InvalidOperationException("Jwt key is missing")));
+            var keyString = _config["Jwt:Key"]
+                ?? throw new InvalidOperationException("JWT Key missing");
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
+
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            int accessTokenMinutes = int.TryParse(_config["Jwt:ExpiresInMinutes"], out var min) ? min : 30;
 
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(
-                    double.Parse(_config["Jwt:ExpiresInMinutes"] ?? "30")),
+                expires: DateTime.UtcNow.AddMinutes(accessTokenMinutes),
                 signingCredentials: creds
             );
 
             var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
 
-            var refreshToken = GenerateRefreshToken();
-
-            user.RefreshTokenHash = BCrypt.Net.BCrypt.HashPassword(refreshToken);
-            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(double.Parse(_config["Jwt:RefreshTokenExpiresInDays"] ?? "7"));
-            user.RefreshTokenRevokedAt = null;
+            var refreshToken = GenerateSecureRefreshToken();
 
             return new TokenResponseDTO
             {
@@ -68,15 +61,13 @@ namespace Business
             };
         }
 
-        private static string GenerateRefreshToken()
+        static string GenerateSecureRefreshToken()
         {
-            var bytes = new byte[64];
+            var randomBytes = new byte[64];
             using var rng = RandomNumberGenerator.Create();
-            rng.GetBytes(bytes);
-            return Convert.ToBase64String(bytes);
+            rng.GetBytes(randomBytes);
+            return Convert.ToBase64String(randomBytes);
         }
     }
-
-  
-  
 }
+

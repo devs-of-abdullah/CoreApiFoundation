@@ -1,8 +1,13 @@
-﻿namespace DTO.Auth
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace DTO.Auth
 {
-    public class LoginRequestDTO
+    public record LoginRequestDTO
     {
-        public string Email { get; set; } = null!;
-        public string Password { get; set; } = null!;
+        [Required, EmailAddress]
+        public string Email { get; init; } = null!;
+
+        [Required]
+        public string Password { get; init; } = null!;
     }
 }
