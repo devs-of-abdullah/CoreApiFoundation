@@ -11,18 +11,17 @@ namespace Business.Services
         {
             _repo = repo;
         }
-
-        public async Task<int> CreateAsync(CreateUserDTO userDto)
+        public async Task<int> CreateAsync(CreateUserDTO dto)
         {
-            if (await _repo.ExistsByEmailAsync(userDto.Email))
-                throw new InvalidOperationException($"'{userDto.Email}' email already exists");
+            if (await _repo.ExistsByEmailAsync(dto.Email))
+                throw new InvalidOperationException($"'{dto.Email}' email already exists");
 
 
             var user = new UserEntity
             {
-                Email = userDto.Email,
-                Role = userDto.Role,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(userDto.Password)
+                Email = dto.Email,
+                Role = dto.Role,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
             };
 
             return await _repo.CreateAsync(user);
@@ -95,17 +94,15 @@ namespace Business.Services
 
             await _repo.UpdateAsync(user);
         }
-        public async Task UpdateRoleAsync(int id,string currentUserRole, string newRole)
-        {
-            if (currentUserRole != "Admin")
-                throw new UnauthorizedAccessException("Only admins can change roles");
+        public async Task UpdateRoleAsync(int id, UpdateUserRoleDTO dto)
+        {         
            
             var user = await _repo.GetByIdAsync(id);
 
             if (user == null)
                 throw new KeyNotFoundException("User not found");
 
-            user.Role = newRole;
+            user.Role = dto.NewRole;
             await _repo.UpdateAsync(user);
 
         }

@@ -8,7 +8,7 @@ namespace Business.Interfaces
         Task<ReadUserDTO?> GetByIdAsync(int id);
         Task<ReadUserDTO?> GetByEmailAsync(string email);
         Task UpdatePasswordAsync(int id, UpdateUserPasswordDTO dto);
-        Task UpdateRoleAsync(int id,string currentUserRole, string newRole);
+        Task UpdateRoleAsync(int id, UpdateUserRoleDTO dto);
         Task UpdateEmailAsync(int id,UpdateUserEmailDTO dto);
     }
 }

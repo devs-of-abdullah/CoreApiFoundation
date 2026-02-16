@@ -1,10 +1,10 @@
 ﻿using DTO.Auth;
 using Data;
 using Microsoft.Extensions.Configuration;
-
+using Business.Interfaces;
 namespace Business.Services
 {
-    public class AuthService
+    public class AuthService : IAuthService
     {
          readonly IUserRepository _userRepository;
          readonly TokenService _tokenService;
@@ -29,7 +29,7 @@ namespace Business.Services
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
                 return null;
 
-            var tokens = _tokenService.GenerateTokens(user);
+            var tokens = _tokenService.GenerateToken(user);
 
             int refreshDays = int.Parse(_config["Jwt:RefreshTokenDays"] ?? "7");
 
@@ -63,7 +63,7 @@ namespace Business.Services
                 !BCrypt.Net.BCrypt.Verify(request.RefreshToken, user.RefreshTokenHash))
                 return null;
 
-            var tokens = _tokenService.GenerateTokens(user);
+            var tokens = _tokenService.GenerateToken(user);
 
             int refreshDays = int.Parse(_config["Jwt:RefreshTokenDays"] ?? "7");
 

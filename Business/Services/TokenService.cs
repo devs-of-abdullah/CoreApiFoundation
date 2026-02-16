@@ -6,10 +6,11 @@ using System.Security.Cryptography;
 using System.Text;
 using DTO.Auth;
 using Entities;
+using Business.Interfaces;
 
 namespace Business
 {
-    public class TokenService
+    public class TokenService : ITokenService
     {
         private readonly IConfiguration _config;
 
@@ -18,7 +19,7 @@ namespace Business
             _config = config;
         }
 
-        public TokenResponseDTO GenerateTokens(UserEntity user)
+        public TokenResponseDTO GenerateToken(UserEntity user)
         {
             var claims = new[]
             {
@@ -47,11 +48,11 @@ namespace Business
             return new TokenResponseDTO
             {
                 AccessToken = new JwtSecurityTokenHandler().WriteToken(token),
-                RefreshToken = GenerateSecureRefreshToken()
+                RefreshToken = GenerateRefreshToken()
             };
         }
 
-        static string GenerateSecureRefreshToken()
+        static string GenerateRefreshToken()
         {
             var bytes = new byte[64];
             using var rng = RandomNumberGenerator.Create();

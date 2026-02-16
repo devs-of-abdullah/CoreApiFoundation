@@ -1,6 +1,8 @@
 ﻿
 
 using System.ComponentModel.DataAnnotations;
+using System.Timers;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DTO.User
 {
@@ -41,5 +43,10 @@ namespace DTO.User
     {
         [Required, MinLength(6)]
         public string CurrentPassword { get; init; } = null!;
+    }
+    public record UpdateUserRoleDTO
+    {
+        [Required]
+        public string NewRole { get; init; } = null!;   
     }
 }
