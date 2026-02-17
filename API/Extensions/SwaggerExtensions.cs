@@ -12,7 +12,7 @@ public static class SwaggerExtensions
         {
             options.SwaggerDoc("v1", new OpenApiInfo
             {
-                Title = "Auth API",
+                Title = "Template Auth API ",
                 Version = "v1"
             });
 

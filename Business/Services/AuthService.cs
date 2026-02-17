@@ -7,10 +7,10 @@ namespace Business.Services
     public class AuthService : IAuthService
     {
          readonly IUserRepository _userRepository;
-         readonly TokenService _tokenService;
+         readonly ITokenService _tokenService;
          readonly IConfiguration _config;
 
-        public AuthService(IUserRepository userRepository, TokenService tokenService, IConfiguration config)
+        public AuthService(IUserRepository userRepository, ITokenService tokenService, IConfiguration config)
         {
             _userRepository = userRepository;
             _tokenService = tokenService;

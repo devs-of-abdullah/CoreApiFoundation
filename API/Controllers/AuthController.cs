@@ -3,15 +3,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 using DTO.Auth;
-using Business.Services;
+using Business.Interfaces;
 
 [ApiController]
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly AuthService _authService;
+     readonly IAuthService _authService;
 
-    public AuthController(AuthService authService)
+    public AuthController(IAuthService authService)
     {
         _authService = authService;
     }
@@ -48,6 +48,7 @@ public class AuthController : ControllerBase
 
     [Authorize]
     [HttpPost("logout")]
+
     public async Task<IActionResult> Logout([FromBody] LogoutRequestDTO request)
     {
         if (!ModelState.IsValid)

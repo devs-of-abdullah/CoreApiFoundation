@@ -21,8 +21,8 @@ public static class ServiceExtensions
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IUserService, UserService>();
-        services.AddScoped<AuthService>();
-        services.AddScoped<TokenService>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<ITokenService,TokenService>();
 
         services.AddControllers()
             .AddJsonOptions(x =>
