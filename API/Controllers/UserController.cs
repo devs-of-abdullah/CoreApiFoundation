@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
+
 [ApiController]
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
@@ -20,10 +21,10 @@ public class UsersController : ControllerBase
 
 
     [HttpGet("{id:int}", Name = "GetUserById")]
-    [Authorize(Policy = "StudentOwnerOrAdmin")]
+    
     [EnableRateLimiting("AuthLimiter")]
 
-    public async Task<ActionResult<ReadUserDTO>> GetById(int id)
+    public async Task<ActionResult<ReadUserDTO>> GetById(int id, [FromServices] IAuthorizationService authorizationService)
     {
         if (id <= 0)
             return BadRequest("Invalid user ID.");
@@ -31,6 +32,10 @@ public class UsersController : ControllerBase
         var user = await _userService.GetByIdAsync(id);
         if (user == null)
             return NotFound("User not found.");
+
+        var authResult = await authorizationService.AuthorizeAsync(User, id, "UserOwnerOrAdmin");
+
+        if (!authResult.Succeeded) return Forbid();
 
         return Ok(user);
     }

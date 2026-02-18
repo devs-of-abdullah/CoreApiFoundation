@@ -12,8 +12,13 @@ builder.Services
     .AddCustomRateLimiting()
     .AddSwaggerDocumentation();
 
-builder.Services.AddAuthorization();
-builder.Services.AddSingleton<IAuthorizationHandler, StudentOwnerOrAdminHandler>();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("UserOwnerOrAdmin", policy =>
+        policy.Requirements.Add(new UserOwnerOrAdminRequirement()));
+});
+
+builder.Services.AddSingleton<IAuthorizationHandler, UserOwnerOrAdminHandler>();
 
 var app = builder.Build();
 
