@@ -3,7 +3,6 @@ A production-ready ASP.NET Core Web API Starter Template built with layered arch
 This template provides a clean and reusable foundation for building scalable and maintainable backend applications.
 
 ## Purpose
-- This template is designed to:
 - Speed up backend development
 - Enforce clean architecture principles
 - Serve as a reusable base for new projects
