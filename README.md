@@ -1,8 +1,5 @@
 # Auth Template API - V1
-A production-ready **ASP.NET Core Web API** starter template built with layered architecture. Provides a clean, reusable foundation for building secure, scalable, and maintainable backend applications.
-
----
-
+ASP.NET Core Web API starter template with layered architecture (API, Business, Data, Entities, DTO). Includes HTTPS + CORS foundation, JWT authentication, role-based authorization, ownership policies, refresh tokens & logout, rate limiting, and logging & auditing. Designed for secure, production-ready, and reusable backend projects. Build in .NET Core
 ## Purpose
 
 - Speed up backend development with a battle-tested starting point
