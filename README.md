@@ -1,4 +1,4 @@
-# CoreApiFoundation
+# Auth Template API - V1
 A production-ready ASP.NET Core Web API Starter Template built with layered architecture.
 This template provides a clean and reusable foundation for building scalable and maintainable backend applications.
 
