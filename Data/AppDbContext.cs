@@ -44,9 +44,6 @@ namespace Data
                 entity.Property(u => u.RefreshTokenExpiresAt);
                      
 
-                entity.HasIndex(u => u.RefreshTokenHash)
-                      .IsUnique();
-
                 entity.HasQueryFilter(u => !u.IsDeleted);
             });
 

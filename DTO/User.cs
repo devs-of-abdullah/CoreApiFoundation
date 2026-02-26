@@ -1,8 +1,6 @@
 ﻿
 
 using System.ComponentModel.DataAnnotations;
-using System.Timers;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DTO.User
 {

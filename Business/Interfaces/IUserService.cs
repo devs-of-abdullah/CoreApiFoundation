@@ -10,5 +10,6 @@ namespace Business.Interfaces
         Task UpdatePasswordAsync(int id, UpdateUserPasswordDTO dto);
         Task UpdateRoleAsync(int id, UpdateUserRoleDTO dto);
         Task UpdateEmailAsync(int id,UpdateUserEmailDTO dto);
+        Task AdminSoftDeleteAsync(int id);
     }
 }

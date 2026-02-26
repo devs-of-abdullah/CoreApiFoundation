@@ -24,23 +24,23 @@ public class UsersController : ControllerBase
     
     [EnableRateLimiting("AuthLimiter")]
 
-    public async Task<ActionResult<ReadUserDTO>> GetById(int id, [FromServices] IAuthorizationService authorizationService)
+    public async Task<ActionResult<ReadUserDTO>> GetById(int id)
     {
         if (id <= 0)
             return BadRequest("Invalid user ID.");
+
+        var authResult = await _authorizationService.AuthorizeAsync(User, id, "UserOwnerOrAdmin");
+        if (!authResult.Succeeded)
+            return Forbid();
 
         var user = await _userService.GetByIdAsync(id);
         if (user == null)
             return NotFound("User not found.");
 
-        var authResult = await authorizationService.AuthorizeAsync(User, id, "UserOwnerOrAdmin");
-
-        if (!authResult.Succeeded) return Forbid();
-
         return Ok(user);
     }
 
-    
+
     [HttpPost(Name = "CreateUser")]
     [EnableRateLimiting("AuthLimiter")]
 
@@ -48,10 +48,6 @@ public class UsersController : ControllerBase
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var existingUser = await _userService.GetByEmailAsync(dto.Email);
-        if (existingUser != null)
-            return Conflict("User email already exists.");
 
         var createdId = await _userService.CreateAsync(dto);
         if (createdId <= 0)
@@ -99,13 +95,13 @@ public class UsersController : ControllerBase
 
 
     [Authorize(Roles = "admin")]
-    [HttpDelete("{id:int}", Name = "OutDelete")]
-    public async Task<IActionResult> OutDelete(int id, [FromBody] SoftUserDeleteDTO dto)
+    [HttpDelete("{id:int}", Name = "AdminDelete")]
+    public async Task<IActionResult> AdminDelete(int id)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+        if (id <= 0)
+            return BadRequest("Invalid user ID.");
 
-        await _userService.SoftDeleteAsync(id, dto);
+        await _userService.AdminSoftDeleteAsync(id);
 
         return NoContent();
     }
